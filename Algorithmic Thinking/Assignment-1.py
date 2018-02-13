@@ -6,7 +6,10 @@ Imports physics citation graph
 
 # general imports
 import urllib2
-import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import itertools
+import random
 
 # Set timeout for CodeSkulptor if necessary
 #import codeskulptor
@@ -85,6 +88,29 @@ def in_degree_distribution(digraph):
         in_degree_dist_dict[in_degree] = in_degree_list.count(in_degree)
     return in_degree_dist_dict   
 
+def algorithm_ER(num_nodes, prob):
+    '''
+    Computes a random directed graph with num_nodes, where the likihood that 
+    two nodes (i,j) have a direct edge from i to j with probability prob.
+    Returns a dict.
+    '''
+    # Creates an empty graph dict
+    digraph = dict()
+    # Adds all nodes to dict with no edges
+    for node in range(num_nodes):
+        digraph[node] = []    
+    # Computes all pairwise permutations
+    node_pairs = itertools.permutations(range(num_nodes), 2)
+    # Loops over all pairwise permutations
+    for node_i, node_j in node_pairs:
+        # Calculates a random uniform value
+        chance = random.uniform(0, 1)
+        # Checks if chance is less than prob
+        if chance < prob:
+            # Adds a directed path from node_i to node_j
+            digraph[node_i].append(node_j) 
+    return digraph
+
 ###################################
 # Question 1
 
@@ -93,8 +119,23 @@ citation_graph = load_graph(CITATION_URL)
 # Compute the unnormalized distribution of the in-degrees of the graph
 in_degree_dist_citation = in_degree_distribution(citation_graph)
 # Convert the in-degrees to floats
-in_degree_values = np.array(in_degree_dist_citation.values()).astype('float')
+in_degree_values = pd.Series(in_degree_dist_citation).astype('float')
 # Compute the normalized distribution in-degree values
-in_degree_values_norm = in_degree_values/np.sum(in_degree_values)
+in_degree_values_norm = in_degree_values/in_degree_values.sum()
+# Creates loglog plot 
+plt.loglog(in_degree_values_norm)
+# Corrects x-axis
+plt.xlim(10**0, 10**3.4)
+# Corrects y-axis
+plt.ylim(10**-5, 10**0)
+# Adds main and sub grids
+plt.grid(True, which='both')
+# Adds title
+plt.title('Normalized Distribution of the In-Degrees of a Citation Graph \n for 27,770 High Energy Physics Theory Papers.')
+# Adds x label
+plt.xlabel('Number of Citations')
+# Adds y label
+plt.ylabel('Normalized Distribution')
 
-plt.loglog(in_degree_dist_citation.keys(), in_degree_values_norm)
+###################################
+# Question 2
