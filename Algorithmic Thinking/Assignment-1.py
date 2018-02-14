@@ -74,15 +74,15 @@ def in_degree_distribution(digraph):
     of nodes with that in-degree. In-degrees with no corresponding nodes in 
     the graph are not included in the dictionary.
     '''
-    # Computes the in_degree of each node     
+    # Computes the in-degree of each node     
     in_degrees_dict = compute_in_degrees(digraph)
-    # Gathers all the in_degree values in a list
+    # Gathers all the in-degree values in a list
     in_degree_list = [in_degree for in_degree in in_degrees_dict.values()]
-    # Finds all the unique in degrees
+    # Finds all the unique in-degrees
     in_degrees = list(set(in_degree_list))
     # Creates dict for storing values
     in_degree_dist_dict = dict([])
-    # Loops over in degrees
+    # Loops over in-degrees
     for in_degree in in_degrees:
         # Computes the distribution of in_degree
         in_degree_dist_dict[in_degree] = in_degree_list.count(in_degree)
@@ -90,7 +90,7 @@ def in_degree_distribution(digraph):
 
 def algorithm_ER(num_nodes, prob):
     '''
-    Computes a random directed graph with num_nodes, where the likihood that 
+    Computes a random directed graph with num_nodes, where the likelihood that 
     two nodes (i,j) have a direct edge from i to j with probability prob.
     Returns a dict.
     '''
@@ -139,3 +139,9 @@ plt.ylabel('Normalized Distribution')
 
 ###################################
 # Question 2
+
+digraph_25 = algorithm_ER(2777, 0.25)
+in_degree_dist_25 = in_degree_distribution(digraph_25)
+in_degree_values_25 = pd.Series(in_degree_dist_25).astype('float')
+in_degree_values_norm_25 = in_degree_values_25/in_degree_values_25.sum()
+plt.loglog(in_degree_values_norm_25)
