@@ -10,6 +10,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import itertools
 import random
+import numpy as np
 
 # Set timeout for CodeSkulptor if necessary
 #import codeskulptor
@@ -140,8 +141,20 @@ plt.ylabel('Normalized Distribution')
 ###################################
 # Question 2
 
-digraph_25 = algorithm_ER(2777, 0.25)
-in_degree_dist_25 = in_degree_distribution(digraph_25)
-in_degree_values_25 = pd.Series(in_degree_dist_25).astype('float')
-in_degree_values_norm_25 = in_degree_values_25/in_degree_values_25.sum()
-plt.loglog(in_degree_values_norm_25)
+def make_in_degree_norm(num_nodes, prob):
+    '''
+    Makes a random digraph with num_nodes and the link probability p. 
+    Calculates the normalized in-degree distribution of this graph.
+    Returns a pd.series
+    '''
+    # Makes the random digraph
+    digraph = algorithm_ER(num_nodes, prob)
+    # Calculates the in-degree distribution
+    in_degree_dist = in_degree_distribution(digraph)
+    # Converts the in-degree dist to float and series
+    in_degree_values = pd.Series(in_degree_dist).astype('float')
+    # Normalizes the in-degree distribution
+    in_degree_values_norm = in_degree_values/in_degree_values.sum()
+    return in_degree_values_norm
+
+plt.loglog(make_in_degree_norm(2777, 0.001))
