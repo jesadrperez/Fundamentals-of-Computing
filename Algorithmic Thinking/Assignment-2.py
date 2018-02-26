@@ -23,6 +23,8 @@ import urllib2
 import time
 import math
 from collections import deque
+import random
+import seaborn as sns
 
 ############################################
 # Provided code for Application portion of Module 2
@@ -113,15 +115,15 @@ def make_complete_graph(num_nodes):
     ugraph = dict()
     # Adds all nodes to dict with no edges
     for node in range(num_nodes):
-        ugraph[node] = []    
+        ugraph[node] = set()
     # Computes all pairwise permutations
     node_pairs = itertools.combinations(range(num_nodes), 2)
     # Loops over all pairwise permutations
     for node_i, node_j in node_pairs:
         # Adds an edge from node_i to node_j
-        ugraph[node_i].append(node_j)
+        ugraph[node_i].add(node_j)
         # Adds an edge from node_j to node_i
-        ugraph[node_j].append(node_i) 
+        ugraph[node_j].add(node_i) 
     return ugraph
     
 def algorithm_ER(num_nodes, prob):
@@ -134,7 +136,7 @@ def algorithm_ER(num_nodes, prob):
     ugraph = dict()
     # Adds all nodes to dict with no edges
     for node in range(num_nodes):
-        ugraph[node] = []    
+        ugraph[node] = set()   
     # Computes all pairwise permutations
     node_pairs = itertools.combinations(range(num_nodes), 2)
     # Loops over all pairwise permutations
@@ -144,9 +146,9 @@ def algorithm_ER(num_nodes, prob):
         # Checks if chance is less than prob
         if chance < prob:
             # Adds an edge from node_i to node_j
-            ugraph[node_i].append(node_j)
+            ugraph[node_i].add(node_j)
             # Adds an edge from node_j to node_i
-            ugraph[node_j].append(node_i) 
+            ugraph[node_j].add(node_i)
     return ugraph
 
 class UPATrial:
@@ -221,11 +223,11 @@ def algorithm_UPA(num_nodes, node_connection):
         # Chooses node_connection subet of nodes
         choosen_nodes = node_chooser.run_trial(node_connection)
         # Adds an edge between added_node and choosen node        
-        ugraph[added_node] = list(set(choosen_nodes))
+        ugraph[added_node] = choosen_nodes
         # Loops over choosen_node(s)
         for choosen_node in choosen_nodes:
             # Adds the edge to choosen nodes edge set
-           ugraph[choosen_node].append(added_node)
+           ugraph[choosen_node].add(added_node)
     return ugraph 
 
 ###################################
@@ -330,7 +332,7 @@ def compute_resilience(ugraph, attack_order):
         # Loops over all remaining nodes in attacked_graph
         for remaining_node in attacked_graph.keys():
             # Removes edges to removed_node in remaining nodes
-            attacked_graph[remaining_node] = attacked_graph[remaining_node] - set([removed_node])        
+            attacked_graph[remaining_node] = set(attacked_graph[remaining_node]) - set([removed_node])        
         # Calculates and stores largest connected component of original graph
         largest_connected_components.append(largest_cc_size(attacked_graph))
     return largest_connected_components
@@ -355,7 +357,31 @@ def calculate_edges_probability(ugraph):
     # Calculates probility using p = avg_edges/(num_nodes - 1)
     prob = avg_edges/(num_nodes - 1)
     return prob
-    
+
+def calulate_avg_degree(ugraph):
+    '''
+    For undirect graph ugraph, returns the average degree (number of edges) as
+    a (a float).
+    '''
+    # Gathers all the in-degree values in a list
+    path_list = [path for path_set in ugraph.values() for path in path_set]
+    # Calculates the total number of edges in ugraph
+    num_edges = float(len(path_list))
+    # Calculates the total number of nodes
+    num_nodes = float(len(ugraph))
+    # Calculates the avergae number edges per node
+    return num_edges/num_nodes
+
+def random_order(graph):
+    '''
+    Returns a list of the nodes in graph in a random order.
+    '''
+    # Gets all the nodes in graph
+    rand_node_list = graph.keys()
+    # Randomly shuffles the nodes
+    random.shuffle(rand_node_list)
+    return rand_node_list
+
 # Loads the computer network graph
 computer_network_graph = load_graph(NETWORK_URL)
 
@@ -364,4 +390,38 @@ simulated_ER_ugraph = algorithm_ER(len(computer_network_graph),
                                    calculate_edges_probability(
                                            computer_network_graph))
 
+# Simulates the computer network graph with the algorithm ER
+simulated_UPA_ugraph = algorithm_UPA(len(computer_network_graph.keys()), 
+                                     int(math.ceil(calulate_avg_degree(computer_network_graph)/2)))
 
+# Creates a list of graphs for attacks
+graph_list = [computer_network_graph, simulated_ER_ugraph, simulated_UPA_ugraph]
+row_names = ['computer_network_graph', 'simulated_ER_ugraph', 'simulated_UPA_ugraph']
+
+# Variable for indexing rows
+count = 0
+
+# Creates blank dataframe for storing results
+resilience_df = pd.DataFrame(index=np.arange(1, len(computer_network_graph.keys())+1))
+
+## Loops over graphs
+for graph in graph_list:
+    # Generates attack order list
+    attack_order = random_order(graph)
+    # Attacks graph
+    resilience_df[row_names[count]] = pd.Series(compute_resilience(graph, set(attack_order)))
+    # Increase index variable
+    count += 1
+
+# Choose dark colors
+sns.set_style("ticks")   
+# plot the graph
+ax = resilience_df.plot(legend='best')
+# Add legend
+ax.legend(['Computer Network', 'Simulated ER (p=0.0040)', 'Simulated UPA (m=3)'])
+# Removes spines
+sns.despine()
+# Labels graph
+plt.title('Resilience of Three Graphs Under Continuous Attack.')
+plt.ylabel('Size of the largest connected component.')
+plt.xlabel('Number of nodes removed.')
