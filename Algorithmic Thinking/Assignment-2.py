@@ -425,7 +425,7 @@ def plot_Q1(resilience_df):
     Makes plot for Question 1
     '''
     # Choose dark colors
-    sns.set_style("ticks")   
+    sns.set_style("dark")   
     # plot the graph
     ax = resilience_df.plot(legend='best')
     # Add legend
@@ -436,6 +436,7 @@ def plot_Q1(resilience_df):
     plt.title('Resilience of Three Graphs Under Continuous Attack.')
     plt.ylabel('Size of the largest connected component.')
     plt.xlabel('Number of nodes removed.')
+    ax.grid(True)
     
 def answer_Q1():
     ''' 
@@ -470,7 +471,7 @@ def fast_targeted_order(ugraph):
     Returns: A list of nodes.
     """
     # Makes a copy of ugraph
-    ugraph_copy = ugraph.copy()
+    ugraph_copy = copy_graph(ugraph)
     # Initializes a dict for storing nodes with same degree
     degree_sets = dict()
     # Sets all the values in degree_sets to be empty
@@ -483,13 +484,9 @@ def fast_targeted_order(ugraph):
         # Adds node to its place in degree_sets
         degree_sets[degree].add(node)
     # Initializes an empty list for storing output
-    order_list = list()
-    # Gets all degrees in ugraph
-    degree_list = degree_sets.keys()
-    # Reverses the degree_list
-    degree_list.reverse()
+    order_list = []
     # Loops over node degrees in reverse order
-    for degree in degree_list:
+    for degree in range(len(ugraph_copy)-1, -1, -1):
         # Loops over degree_sets until empty
         while len(degree_sets[degree]) > 0:
             # Chooses a random node with degree 
@@ -504,12 +501,102 @@ def fast_targeted_order(ugraph):
                 degree_sets[neighbor_degree] = degree_sets[neighbor_degree] - set([neighbor])
                 # Places neighbor_degree in degree_sets with one less degree
                 degree_sets[neighbor_degree-1].add(neighbor)
-            # Adds choosen_node to output
+            # Adds choosen_node to output            
             order_list.append(choosen_node)
             # Removes choosen node from graph
-            ugraph_copy.pop(choosen_node, None)
-    return degree_sets    
+            delete_node(ugraph_copy, choosen_node)
+    return order_list    
  
-ugraph = algorithm_ER(5, 0.5)
-fast_targeted_order(ugraph)
-       
+def test_fast_graphs():
+    '''
+    Generates the simulated UPA graphs under different node sizes and 
+    calculates the time to run the functions target_order and 
+    fast_target_order on them. Returns a pd dataframe with the results.
+    '''
+    # Initializes dataframe for storing time (the output)
+    running_time_df = pd.DataFrame(index=np.arange(10, 1000, 10), columns=['regular', 'fast'])
+    # Initlializes variables for record keeping
+    row_count = 0
+    # Loops over different node sizes
+    for num_nodes in range(10, 1000, 10):
+        # Initlializes variables for record keeping
+        column_count = 0
+        # Simulates the computer network graph with the algorithm UPA
+        simulated_graph = algorithm_UPA(num_nodes, 5)
+        # Loops over target order functions
+        for target_order in [targeted_order, fast_targeted_order]:
+            # Gets current time in milil seconds
+            start_time = time.time()
+            # Performs target_order
+            target_order(simulated_graph)
+            # Calculates elapsed time
+            elapsed_time = time.time() - start_time
+            # save elapsed time to dataframe
+            running_time_df.iloc[row_count, column_count] = elapsed_time
+            # Record keeping
+            column_count += 1
+        # Record keeping
+        row_count += 1
+    return running_time_df
+
+def plot_Q3():
+    '''
+    Makes the plot for answering Q3.
+    '''
+    running_time_df = test_fast_graphs()
+    sns.set_style("dark")
+    ax = running_time_df.plot(legend='best')
+    ax.legend(['Regular', 'Fast'])
+    # Removes spines
+    sns.despine()
+    ax.grid(True)
+    # Labels graph
+    plt.title('Running Time of Target Algorithms as a Function of Number of Nodes. \n (Performed on Desktop)')
+    plt.ylabel('Running Time (in Seconds).')
+    plt.xlabel('Size of UPA Graph, m = 5')
+    
+###################################
+# Question 4   
+    
+def ordered_attack_graphs(graph_list):
+    '''
+    Uses ordered attacks on the graphs in graphs list. Returns a pd dataframe with the 
+    resilience of the graphs
+    '''
+    # Names of graphs
+    row_names = ['computer_network_graph', 'simulated_ER_ugraph', 'simulated_UPA_ugraph']
+    # Variable for indexing rows
+    count = 0
+    # Creates blank dataframe for storing results
+    resilience_df = pd.DataFrame(index=np.arange(1, len(graph_list[0].keys())+1))
+    ## Loops over graphs
+    for graph in graph_list:
+        print 'Attacking', row_names[count]
+        # Generates attack order list
+        attack_order = fast_targeted_order(graph)
+        # Attacks graph
+        resilience_df[row_names[count]] = pd.Series(compute_resilience(graph, attack_order))
+        # Increase index variable
+        count += 1
+    return resilience_df
+
+def plot_Q4():
+    '''
+    Makes plot for Question 4
+    '''
+    graph_list = get_graphs()
+    resilience_df = ordered_attack_graphs(graph_list)    
+    # Choose dark colors
+    sns.set_style("dark")   
+    # plot the graph
+    ax = resilience_df.plot(legend='best')
+    # Add legend
+    ax.legend(['Computer Network', 'Simulated ER (p=0.0040)', 'Simulated UPA (m=3)'])
+    # Removes spines
+    sns.despine()
+    ax.grid(True)
+    # Labels graph
+    plt.title('Resilience of Three Graphs Under Ordered Attack.')
+    plt.ylabel('Size of the largest connected component.')
+    plt.xlabel('Number of nodes removed.')
+        
