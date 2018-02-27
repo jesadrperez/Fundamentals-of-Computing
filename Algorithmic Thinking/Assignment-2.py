@@ -332,7 +332,7 @@ def compute_resilience(ugraph, attack_order):
         # Loops over all remaining nodes in attacked_graph
         for remaining_node in attacked_graph.keys():
             # Removes edges to removed_node in remaining nodes
-            attacked_graph[remaining_node] = set(attacked_graph[remaining_node]) - set([removed_node])        
+            attacked_graph[remaining_node] = attacked_graph[remaining_node] - set([removed_node])
         # Calculates and stores largest connected component of original graph
         largest_connected_components.append(largest_cc_size(attacked_graph))
     return largest_connected_components
@@ -382,46 +382,134 @@ def random_order(graph):
     random.shuffle(rand_node_list)
     return rand_node_list
 
-# Loads the computer network graph
-computer_network_graph = load_graph(NETWORK_URL)
+def get_graphs():
+    '''
+    Loads the computer network graphs and generates the simulated ER and UPA
+    graphs. Returns these graphs in a list.
+    '''
+    # Loads the computer network graph
+    computer_network_graph = load_graph(NETWORK_URL)    
+    # Simulates the computer network graph with the algorithm ER
+    simulated_ER_ugraph = algorithm_ER(len(computer_network_graph), 
+                                       calculate_edges_probability(
+                                               computer_network_graph))    
+    # Simulates the computer network graph with the algorithm ER
+    simulated_UPA_ugraph = algorithm_UPA(len(computer_network_graph.keys()), 
+                                         int(math.ceil(calulate_avg_degree(computer_network_graph))))
+    return [computer_network_graph, simulated_ER_ugraph, simulated_UPA_ugraph]
 
-# Simulates the computer network graph with the algorithm ER
-simulated_ER_ugraph = algorithm_ER(len(computer_network_graph), 
-                                   calculate_edges_probability(
-                                           computer_network_graph))
+def attack_graphs(graph_list):
+    '''
+    Attacks the graphs in graphs list. Returns a pd dataframe with the 
+    resilience of the graphs
+    '''
+    # Names of graphs
+    row_names = ['computer_network_graph', 'simulated_ER_ugraph', 'simulated_UPA_ugraph']
+    # Variable for indexing rows
+    count = 0
+    # Creates blank dataframe for storing results
+    resilience_df = pd.DataFrame(index=np.arange(1, len(graph_list[0].keys())+1))
+    ## Loops over graphs
+    for graph in graph_list:
+        print 'Attacking', row_names[count]
+        # Generates attack order list
+        attack_order = random_order(graph)
+        # Attacks graph
+        resilience_df[row_names[count]] = pd.Series(compute_resilience(graph, attack_order))
+        # Increase index variable
+        count += 1
+    return resilience_df
 
-# Simulates the computer network graph with the algorithm ER
-simulated_UPA_ugraph = algorithm_UPA(len(computer_network_graph.keys()), 
-                                     int(math.ceil(calulate_avg_degree(computer_network_graph)/2)))
+def plot_Q1(resilience_df):
+    '''
+    Makes plot for Question 1
+    '''
+    # Choose dark colors
+    sns.set_style("ticks")   
+    # plot the graph
+    ax = resilience_df.plot(legend='best')
+    # Add legend
+    ax.legend(['Computer Network', 'Simulated ER (p=0.0040)', 'Simulated UPA (m=3)'])
+    # Removes spines
+    sns.despine()
+    # Labels graph
+    plt.title('Resilience of Three Graphs Under Continuous Attack.')
+    plt.ylabel('Size of the largest connected component.')
+    plt.xlabel('Number of nodes removed.')
+    
+def answer_Q1():
+    ''' 
+    Answers Q1.
+    '''
+    # Loads and simulates graphs
+    graph_list = get_graphs()
+    # Attacks graphs
+    resilience_df = attack_graphs(graph_list)
+    # Plots results
+    plot_Q1(resilience_df)
+    
+#answer_Q1()    
+    
+###################################
+# Question 2    
 
-# Creates a list of graphs for attacks
-graph_list = [computer_network_graph, simulated_ER_ugraph, simulated_UPA_ugraph]
-row_names = ['computer_network_graph', 'simulated_ER_ugraph', 'simulated_UPA_ugraph']
+def answer_Q2():
+    '''
+    Answers Q2.
+    '''
+    print 'All three graphs are resilient under attack.'
 
-# Variable for indexing rows
-count = 0
+#answer_Q2()     
 
-# Creates blank dataframe for storing results
-resilience_df = pd.DataFrame(index=np.arange(1, len(computer_network_graph.keys())+1))
-
-## Loops over graphs
-for graph in graph_list:
-    # Generates attack order list
-    attack_order = random_order(graph)
-    # Attacks graph
-    resilience_df[row_names[count]] = pd.Series(compute_resilience(graph, set(attack_order)))
-    # Increase index variable
-    count += 1
-
-# Choose dark colors
-sns.set_style("ticks")   
-# plot the graph
-ax = resilience_df.plot(legend='best')
-# Add legend
-ax.legend(['Computer Network', 'Simulated ER (p=0.0040)', 'Simulated UPA (m=3)'])
-# Removes spines
-sns.despine()
-# Labels graph
-plt.title('Resilience of Three Graphs Under Continuous Attack.')
-plt.ylabel('Size of the largest connected component.')
-plt.xlabel('Number of nodes removed.')
+###################################
+# Question 3
+    
+def fast_targeted_order(ugraph):    
+    """
+    Compute a fast targeted attack order consisting of nodes of maximal degree.
+    Returns: A list of nodes.
+    """
+    # Makes a copy of ugraph
+    ugraph_copy = ugraph.copy()
+    # Initializes a dict for storing nodes with same degree
+    degree_sets = dict()
+    # Sets all the values in degree_sets to be empty
+    for degree in range(len(ugraph.keys())):
+        degree_sets[degree] = set([])
+    # Loops over nodes in ugraph
+    for node in ugraph.keys():
+        # Calculates the degree node
+        degree = len(ugraph[node])
+        # Adds node to its place in degree_sets
+        degree_sets[degree].add(node)
+    # Initializes an empty list for storing output
+    order_list = list()
+    # Gets all degrees in ugraph
+    degree_list = degree_sets.keys()
+    # Reverses the degree_list
+    degree_list.reverse()
+    # Loops over node degrees in reverse order
+    for degree in degree_list:
+        # Loops over degree_sets until empty
+        while len(degree_sets[degree]) > 0:
+            # Chooses a random node with degree 
+            choosen_node = random.choice(list(degree_sets[degree]))
+            # Removes choosen_node from degree_sets
+            degree_sets[degree].remove(choosen_node)
+            # Loops over each neighbor of choosen_node
+            for neighbor in ugraph_copy[choosen_node]:
+                # Calculates degree of neighbor node
+                neighbor_degree = len(ugraph_copy[neighbor])
+                # Removes neighor_degree from current degree_sets
+                degree_sets[neighbor_degree] = degree_sets[neighbor_degree] - set([neighbor])
+                # Places neighbor_degree in degree_sets with one less degree
+                degree_sets[neighbor_degree-1].add(neighbor)
+            # Adds choosen_node to output
+            order_list.append(choosen_node)
+            # Removes choosen node from graph
+            ugraph_copy.pop(choosen_node, None)
+    return degree_sets    
+ 
+ugraph = algorithm_ER(5, 0.5)
+fast_targeted_order(ugraph)
+       
