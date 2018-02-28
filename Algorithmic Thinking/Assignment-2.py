@@ -23,8 +23,10 @@ import urllib2
 import time
 import math
 from collections import deque
-import random
 import seaborn as sns
+import gc
+
+
 
 ############################################
 # Provided code for Application portion of Module 2
@@ -498,7 +500,7 @@ def fast_targeted_order(ugraph):
                 # Calculates degree of neighbor node
                 neighbor_degree = len(ugraph_copy[neighbor])
                 # Removes neighor_degree from current degree_sets
-                degree_sets[neighbor_degree] = degree_sets[neighbor_degree] - set([neighbor])
+                degree_sets[neighbor_degree].remove(neighbor)
                 # Places neighbor_degree in degree_sets with one less degree
                 degree_sets[neighbor_degree-1].add(neighbor)
             # Adds choosen_node to output            
@@ -513,6 +515,8 @@ def test_fast_graphs():
     calculates the time to run the functions target_order and 
     fast_target_order on them. Returns a pd dataframe with the results.
     '''
+    # Disables garbage collection
+    gc.disable()
     # Initializes dataframe for storing time (the output)
     running_time_df = pd.DataFrame(index=np.arange(10, 1000, 10), columns=['regular', 'fast'])
     # Initlializes variables for record keeping
@@ -524,19 +528,21 @@ def test_fast_graphs():
         # Simulates the computer network graph with the algorithm UPA
         simulated_graph = algorithm_UPA(num_nodes, 5)
         # Loops over target order functions
-        for target_order in [targeted_order, fast_targeted_order]:
-            # Gets current time in milil seconds
-            start_time = time.time()
+        for function in [targeted_order, fast_targeted_order]:
+            # Gets current time in seconds
+            start_time = time.clock() 
             # Performs target_order
-            target_order(simulated_graph)
+            output = function(simulated_graph)
             # Calculates elapsed time
-            elapsed_time = time.time() - start_time
+            elapsed_time = time.clock() - start_time
             # save elapsed time to dataframe
             running_time_df.iloc[row_count, column_count] = elapsed_time
             # Record keeping
             column_count += 1
         # Record keeping
         row_count += 1
+    # Enables garbage collection    
+    gc.enable()    
     return running_time_df
 
 def plot_Q3():
