@@ -597,7 +597,7 @@ def plot_Q4():
     # plot the graph
     ax = resilience_df.plot(legend='best')
     # Add legend
-    ax.legend(['Computer Network', 'Simulated ER (p=0.0040)', 'Simulated UPA (m=3)'])
+    ax.legend(['Computer Network', 'Simulated UPA (m=3)', 'Simulated ER (p=0.0040)'])
     # Removes spines
     sns.despine()
     ax.grid(True)
