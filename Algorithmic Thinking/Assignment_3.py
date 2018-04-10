@@ -13,7 +13,6 @@ where cluster_list is a 2D list of clusters in the plane
 
 import math
 import alg_cluster
-from itertools import combinations
 
 
 ######################################################
@@ -42,16 +41,22 @@ def slow_closest_pair(cluster_list):
     """
     # initalize output
     output = (float("inf"), -1, -1)   
-    # generate all pairs of clusters
-    cluster_pairs = combinations(range(len(cluster_list)), 2)
-    # loop over cluster pairs
-    for pair in cluster_pairs:
-        # compute pair disance between pairs
-        dist_tuple = pair_distance(cluster_list, pair[0], pair[1])
-        # compare to smallest known distance
-        if dist_tuple[0] < output[0]:
-            # replace smallest known distance            
-            output = dist_tuple
+    # generate all indexex of clusters
+    cluster_indexes = range(len(cluster_list))
+    # loop over cluster_list
+    for first_cluster in cluster_indexes:
+        #print 'first cluster:', first_cluster
+        # get remaining clusters in cluster_index
+        remaining_cluster_indexes = cluster_indexes[first_cluster+1:]
+        # loop over remaining clusters
+        for second_cluster in remaining_cluster_indexes:
+            #print 'second cluster:', second_cluster
+            # compute pair disance between pairs
+            dist_tuple = pair_distance(cluster_list, first_cluster, second_cluster)
+            # compare to smallest known distance
+            if dist_tuple[0] < output[0]:
+                # replace smallest known distance            
+                output = dist_tuple
     return output
 
 
@@ -66,8 +71,28 @@ def fast_closest_pair(cluster_list):
     Output: tuple of the form (dist, idx1, idx2) where the centers of the clusters
     cluster_list[idx1] and cluster_list[idx2] have minimum distance dist.       
     """
+    # get the number of clusters in cluster_list
+    num_clusters = len(cluster_list)
+    # Use slow_closest_pair if more efficeient
+    if num_clusters <= 3:
+        output = slow_closest_pair(cluster_list)
+    # Use (fast) recusive method 
+    else:
+        # find the center of the list
+        center_of_list = num_clusters/2
+        # seperate clusters into left and right
+        left_cluster_list = cluster_list[:center_of_list]
+        right_cluster_list = cluster_list[center_of_list:]
+        # find the closest pair in the left list
+        left_output = fast_closest_pair(left_cluster_list)
+        # find the closest pair in the right
+        right_ouput = fast_closest_pair(right_cluster_list)
+        # find the closest pair on the left and center
+        if left_output[0] < pair_distance(cluster_list, )
+        output = 
+        
     
-    return ()
+    return output
 
 
 def closest_pair_strip(cluster_list, horiz_center, half_width):
