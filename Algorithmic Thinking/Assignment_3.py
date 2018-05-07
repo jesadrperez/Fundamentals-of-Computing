@@ -84,14 +84,23 @@ def fast_closest_pair(cluster_list):
         left_cluster_list = cluster_list[:center_of_list]
         right_cluster_list = cluster_list[center_of_list:]
         # find the closest pair in the left list
-        left_output = fast_closest_pair(left_cluster_list)
+        left_dist = fast_closest_pair(left_cluster_list)
         # find the closest pair in the right
-        right_ouput = fast_closest_pair(right_cluster_list)
-        # find the closest pair on the left and center
-        if left_output[0] < pair_distance(cluster_list, )
-        output = 
-        
-    
+        right_dist = fast_closest_pair(right_cluster_list)
+        # Compare left and right dist        
+        if left_dist[0] < right_dist[0]:
+            # Left dist is smaller
+            output = left_dist                  
+        else:
+            # right dist is smaller
+            output = (right_dist[0], right_dist[1]+center_of_list, right_dist[2]+center_of_list)
+        # Compute horiz_center - center line strip
+        horiz_center = (cluster_list[num_clusters-1] + cluster_list[num_clusters])
+        # Compute closest pair strip
+        closest_output = closest_pair_strip(cluster_list, horiz_center, output[0])
+        # ADD COMMENT
+        if output[0] > closest_output[0]:
+            output = closest_output       
     return output
 
 
