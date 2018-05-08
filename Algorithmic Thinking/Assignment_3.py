@@ -116,21 +116,22 @@ def closest_pair_strip(cluster_list, horiz_center, half_width):
     Output: tuple of the form (dist, idx1, idx2) where the centers of the clusters
     cluster_list[idx1] and cluster_list[idx2] lie in the strip and have minimum distance dist.       
     """
-    # copy cluster list
-    copy_cluster_list = cluster_list[:]
     # sort copy cluster_list by vertical coordinates       
     copy_cluster_list.sort(key = lambda cluster: cluster.vert_center())
     # creates set for storing indices
     index_set = set([])
     # loops over cluster_list by index
-    for index in range(len(copy_cluster_list)):
+    for index in range(len(cluster_list)):
         # calculates the abs difference between cluster at index and horiz_center
-        abs_diff = abs(copy_cluster_list[index].horiz_center() - horiz_center)
+        abs_diff = abs(cluster_list[index].horiz_center() - horiz_center)
         # Compares abs_diff and half_width
         if abs_diff < half_width:
         # Adds index to set
             index_set.add(index)
     #print 'index_set:', index_set
+    # Sort the index_set
+    
+    
     # get the length of index_set
     set_length = len(index_set)
     # default output for comparison
@@ -140,7 +141,7 @@ def closest_pair_strip(cluster_list, horiz_center, half_width):
        # print 'u:', dummy_u
         for dummy_v in range(dummy_u + 1, min(dummy_u + 3, set_length)):
             #print 'v:', dummy_v
-            dist = pair_distance(copy_cluster_list, list(index_set)[dummy_u], list(index_set)[dummy_v])
+            dist = pair_distance(cluster_list, list(index_set)[dummy_u], list(index_set)[dummy_v])
             if dist[0] < output[0]:
                 output = dist       
     return output
