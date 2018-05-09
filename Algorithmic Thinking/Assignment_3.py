@@ -50,10 +50,11 @@ def slow_closest_pair(cluster_list):
         remaining_cluster_indexes = cluster_indexes[first_cluster+1:]
         # loop over remaining clusters
         for second_cluster in remaining_cluster_indexes:
-            #print 'second cluster:', second_cluster
+            #print '  second cluster:', second_cluster
             # compute pair disance between pairs
             dist_tuple = pair_distance(cluster_list, first_cluster, second_cluster)
             # compare to smallest known distance
+            #print '    dist:', dist_tuple
             if dist_tuple[0] < output[0]:
                 # replace smallest known distance            
                 output = dist_tuple
@@ -116,8 +117,6 @@ def closest_pair_strip(cluster_list, horiz_center, half_width):
     Output: tuple of the form (dist, idx1, idx2) where the centers of the clusters
     cluster_list[idx1] and cluster_list[idx2] lie in the strip and have minimum distance dist.       
     """
-    # sort copy cluster_list by vertical coordinates       
-    copy_cluster_list.sort(key = lambda cluster: cluster.vert_center())
     # creates set for storing indices
     index_set = set([])
     # loops over cluster_list by index
@@ -128,20 +127,23 @@ def closest_pair_strip(cluster_list, horiz_center, half_width):
         if abs_diff < half_width:
         # Adds index to set
             index_set.add(index)
-    #print 'index_set:', index_set
+    print 'index_set:', index_set
     # Sort the index_set
-    
-    
+    index_set = list(index_set)
+    index_set.sort(key = lambda i: cluster_list[i].vert_center())
+    index_set = set(index_set)
+    print 'index_set (sorted):', index_set
     # get the length of index_set
     set_length = len(index_set)
     # default output for comparison
     output = (float('inf'), -1, -1)
     # first loop
     for dummy_u in range(0, set_length - 1):
-       # print 'u:', dummy_u
-        for dummy_v in range(dummy_u + 1, min(dummy_u + 3, set_length)):
-            #print 'v:', dummy_v
+        print 'u:', dummy_u
+        for dummy_v in range(dummy_u + 1, min(dummy_u + 2, set_length)):
+            print 'v:', dummy_v
             dist = pair_distance(cluster_list, list(index_set)[dummy_u], list(index_set)[dummy_v])
+            print 'dist:', dist
             if dist[0] < output[0]:
                 output = dist       
     return output
