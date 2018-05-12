@@ -95,9 +95,11 @@ def fast_closest_pair(cluster_list):
             # right dist is smaller
             output = (right_dist[0], right_dist[1]+center_of_list, right_dist[2]+center_of_list)
         # Compute horiz_center - center line strip
-        horiz_center = (cluster_list[num_clusters-2].horiz_center() + cluster_list[num_clusters-1].horiz_center())
+        horiz_center = (cluster_list[center_of_list-1].horiz_center() + cluster_list[center_of_list].horiz_center())/2
+        # Compute the half_width
+        half_width = output[0]
         # Compute closest pair strip
-        closest_output = closest_pair_strip(cluster_list, horiz_center, output[0])
+        closest_output = closest_pair_strip(cluster_list, horiz_center, half_width)
         # ADD COMMENT
         if output[0] > closest_output[0]:
             output = closest_output       
@@ -159,8 +161,21 @@ def hierarchical_clustering(cluster_list, num_clusters):
     Input: List of clusters, integer number of clusters
     Output: List of clusters whose length is num_clusters
     """
-    
-    return []
+    # create a copy of cluster_list    
+    hier_clusters = list(cluster_list)[:]
+    # init variable for storing best distance
+    best_dist = (float("inf"), -1, -1)   
+    # loop over hier_clusters till desired size (num_clusters)
+    while len(hier_clusters) > num_clusters:
+        # sort the cluster by their horizontal centers
+        hier_clusters.sort(key = lambda cluster: cluster.horiz_center())
+        # Get clusters with smallest distance
+        best_dist = fast_closest_pair(hier_clusters)
+        # Combine the two closest clusters
+        hier_clusters[best_dist[1]].merge_clusters(hier_clusters[best_dist[2]])
+        # Remove the merged in cluster
+        hier_clusters.pop(best_dist[2])   
+    return hier_clusters
 
 
 ######################################################################
@@ -175,8 +190,20 @@ def kmeans_clustering(cluster_list, num_clusters, num_iterations):
     Input: List of clusters, integers number of clusters and number of iterations
     Output: List of clusters whose length is num_clusters
     """
+    # Make a copy of the cluster_list
+    kmeans_clusters = list(cluster_list)[:]  
+    # Sort the clusters by population in decreasing order
+    kmeans_clusters.sort(key = lambda cluster: cluster.total_population(), reverse=True)
+    # Init variable for storing k centers
+    k_centers = []
+    # Loop over first num_clusters in kmean_clusters
+    while len(k_centers) < num_clusters:
+        # Get the number of centers
+        num_centers = len(k_centers)
+        # position initial clusters at the location of clusters with largest populations
+        k_centers.append((kmeans_clusters[num_centers].horiz_center(), kmeans_clusters[num_centers].vert_center()))            
+    
+    
+    return k_centers
 
-    # position initial clusters at the location of clusters with largest populations
-            
-    return []
-
+######################################################################
