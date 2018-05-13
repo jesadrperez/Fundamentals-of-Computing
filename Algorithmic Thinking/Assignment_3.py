@@ -190,20 +190,46 @@ def kmeans_clustering(cluster_list, num_clusters, num_iterations):
     Input: List of clusters, integers number of clusters and number of iterations
     Output: List of clusters whose length is num_clusters
     """
-    # Make a copy of the cluster_list
-    kmeans_clusters = list(cluster_list)[:]  
-    # Sort the clusters by population in decreasing order
-    kmeans_clusters.sort(key = lambda cluster: cluster.total_population(), reverse=True)
-    # Init variable for storing k centers
-    k_centers = []
-    # Loop over first num_clusters in kmean_clusters
-    while len(k_centers) < num_clusters:
-        # Get the number of centers
-        num_centers = len(k_centers)
-        # position initial clusters at the location of clusters with largest populations
-        k_centers.append((kmeans_clusters[num_centers].horiz_center(), kmeans_clusters[num_centers].vert_center()))            
+
+    ## Initialize old cluster using large population counties
+    # Make a copy of cluster_list
+    cluster_list_copy = cluster_list[:]
+    # Sort copy of cluster list by population
+    cluster_list_copy.sort(key = lambda cluster: cluster.total_population(), reverse=True)
+    # Make old clusters using the first num_clusters from cluster_list_copy
+    old_clusters = cluster_list_copy[:num_clusters]
     
-    
-    return k_centers
+    #For number of iterations 
+    # Perform num_iterations of main loop
+    for dummy_iteration in range(num_iterations):
+        ## Initialize the new clusters to be empty
+        new_clusters = []
+        
+        # Loop over old_clusters to extract values
+        for old_index, old_cluster in enumerate(old_clusters):
+            # Adds the location of old_cluster to new clusters
+            new_clusters.append(alg_cluster.Cluster(set([]), old_cluster.horiz_center(), old_cluster.vert_center(), 0, 0))
+        
+        ##For each county (cluster in cluster_list)
+        # Loop over clusters (county) in cluster_list
+        for cluster in cluster_list:
+            ##Find the old cluster center that is closest
+            # create variable for storing distance and index of closet cluster
+            closest_cluster = (float('inf'), -1)
+            # Loop over old cluster centers
+            for old_index, old_cluster in enumerate(old_clusters):
+                # Get distance between county and old cluster
+                distance = cluster.distance(old_cluster)
+                # Find the smallest distance
+                if closest_cluster[0] > distance:
+                    # Save the newest distance and old_cluster index
+                    closest_cluster = (distance, old_index)
+            ## Add the county to the corresponding new cluster 
+            new_clusters[closest_cluster[1]].merge_clusters(cluster)     
+        ## Set old clusters equal to new clusters
+        old_clusters = new_clusters[:]
+    ## Return the new clusters
+    return old_clusters
+
 
 ######################################################################
