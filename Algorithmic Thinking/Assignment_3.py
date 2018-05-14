@@ -11,7 +11,6 @@ kmeans_clustering(cluster_list, num_clusters, num_iterations)
 where cluster_list is a 2D list of clusters in the plane
 """
 
-import math
 import alg_cluster
 
 
