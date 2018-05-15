@@ -97,6 +97,9 @@ def plot_Q1():
     ax.set(xlabel='Number of Clusters',  ylabel='Seconds')
     # Add grid
     ax.grid(True)
+    
+    fig = ax.get_figure()
+    fig.savefig('Application 3 - Q1.png')
 
 
 ######################################################
@@ -294,15 +297,74 @@ def load_data(cancer_id):
         
     return (data_table, singleton_list)
 
-def test_clustering(data_set, clustering_algo()):
+def compute_distortion_data_set(data_table, cluster_list):
+    '''
+    Computes the total distortion of a list of clusters.
+    
+    Input: data_set - a tuple (data_table, cluster_list).
+    
+    Output: total_distortion - a float of the total distortion
+    '''
+    # Init list variable for storing distortion
+    distortion = []
+    # loop over clusters
+    for cluster in cluster_list:
+        # Calculate and save distortion
+        distortion.append(cluster.cluster_error(data_table))
+    return sum(distortion) 
+
+
+def test_clustering(data_set, method):
     '''
     Test the distortion of a data_set under clustering method.
     
     Input: a tuple (data_table, cluster_list) and a clustering algorithm 
 
     Output: a list of distortion values
+    '''   
+    # number of clusters to form
+    num_cluster_list = np.arange(6,21,1)
+    # init list to store distortion
+    distortion_list = []
+    # Loop over cluster sizes list
+    for num_cluster in num_cluster_list:
+        # make a copy of the cluster_list
+        cluster_list = [cluster.copy() for cluster in data_set[1]] 
+        if method == 'K-Means':
+            # perfrom kmeans
+            cluster_list = project.kmeans_clustering(cluster_list, num_cluster, 10)
+        else:        
+            # perform hier clustering
+            project.hierarchical_clustering(cluster_list, num_cluster)
+        # calculate and save distortion
+        distortion_list.append(compute_distortion_data_set(data_set[0], cluster_list))
+    return distortion_list
+
+def generate_df(cancer_id):
     '''
-    
-    
-    
-    
+    Plots the graph for cancer set 111.
+    '''    
+    # load data
+    data_set = load_data(cancer_id)
+    # Dict for storing values
+    dist_dict = dict()
+    # Add num_clusters
+    dist_dict['Number of Clusters'] = np.arange(6,21,1)    
+    # Compute distortion
+    for method in ['K-Means', 'Hierarchical']: 
+        # Computes distortion and saves values
+        dist_dict[method] = test_clustering(data_set, method)        
+    return pd.DataFrame(dist_dict).set_index('Number of Clusters')
+
+def plot_q10():
+    '''
+    answer q10
+    '''
+    for cancer_id in ['111', '290', '896']:
+        plot_df = generate_df(cancer_id)
+        title = 'Distortion for Hierarchical and K-Means Cluster \n' + cancer_id + ' Cancer Dataset'
+        ax = plot_df.plot.line(legend='best', title = title)
+        ax.set(xlabel='Number of Clusters',  ylabel='Distortion')
+        ax.grid(True)
+        fig = ax.get_figure()
+        fig.savefig('Application 3 - Q10_'+cancer_id+'.png')
