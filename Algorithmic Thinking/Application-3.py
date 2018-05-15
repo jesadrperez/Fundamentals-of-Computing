@@ -273,3 +273,36 @@ def answer_Q7():
     
 ######################################################
 # Question 10
+    
+def load_data(cancer_id):
+    '''
+    Loads the cancer data.
+    
+    Input: A string that denotes which cancer data to load
+    
+    Output: a tuple (data_table, cluster_list).
+    '''
+    
+    DIRECTORY = "http://commondatastorage.googleapis.com/codeskulptor-assets/"
+    data_url = DIRECTORY + "data_clustering/unifiedCancerData_" + cancer_id + ".csv"
+    
+    data_table = viz.load_data_table(data_url)
+    
+    singleton_list = []
+    for line in data_table:
+        singleton_list.append(alg_cluster.Cluster(set([line[0]]), line[1], line[2], line[3], line[4]))
+        
+    return (data_table, singleton_list)
+
+def test_clustering(data_set, clustering_algo()):
+    '''
+    Test the distortion of a data_set under clustering method.
+    
+    Input: a tuple (data_table, cluster_list) and a clustering algorithm 
+
+    Output: a list of distortion values
+    '''
+    
+    
+    
+    
