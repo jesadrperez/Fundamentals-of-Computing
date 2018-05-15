@@ -356,7 +356,7 @@ def generate_df(cancer_id):
         dist_dict[method] = test_clustering(data_set, method)        
     return pd.DataFrame(dist_dict).set_index('Number of Clusters')
 
-def plot_q10():
+def plot_Q10():
     '''
     answer q10
     '''
