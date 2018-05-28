@@ -9,6 +9,8 @@ import Project_4 as student
 import random
 import pandas as pd
 import seaborn as sns
+import numpy as np
+import string
 
 sns.set_style("dark")
 
@@ -45,8 +47,6 @@ def percent_match(local_alignment):
     Computes the percent similarilty between a local alignment to the 
     global alignment of the PAX sequence.
     '''
-    # make a copy of the local alignment
-    alignment_copy = local_alignment[:]
     # remove the '-' from the local alignment
     local_alignment = local_alignment.replace('-', '')
     # load the PAM50 scoring matrix
@@ -130,9 +130,9 @@ def perform_human_fly_trials():
     scoring_dist_df.index.rename('Scores', inplace=True)
     return scoring_dist_df
 
-def answer_Q4():
+def answer_Q4(save):
     # load the data
-    scoring_dist_df = scoring_dist_df
+    scoring_dist_df = perform_human_fly_trials()
     # compute the normalized frequency
     scoring_dist_df['Norm Freq'] = scoring_dist_df['Frequency']/scoring_dist_df['Frequency'].sum()
     # plot the data
@@ -141,4 +141,91 @@ def answer_Q4():
     ax.set(xlabel='Scores',  ylabel='Fraction of Trials')
     # add grid
     ax.grid(True)
+    # Saves the plot
+    if save:
+        fig = ax.get_figure()
+        fig.savefig('Application 4 - Q4.png')
+        
+        
+###############################################
+# Question 5     
+
+def answer_Q5():
+    # get the null dist data        
+    scoring_dist_df = perform_human_fly_trials()
+    # get the score from the local alignments
+    score, human_sequence, fly_sequence = answer_Q1()
+    # Init list to store scores    
+    null_scores = []
+    # loop over data frame
+    for index, row in scoring_dist_df.iterrows():
+        dummy_list = [int(index)]*row['Frequency']
+        for element in dummy_list:
+            null_scores.append(element)
+    # calculate mean            
+    mean = np.mean(null_scores)
+    # calculate std
+    std = np.std(null_scores)
+    # calculate z-score
+    z_score = (score - mean)/std
+    return (mean, std, z_score)
+
+
+###############################################
+# Question 7
+
+def answer_Q7():
+    alphabet = set(['A', 'C', 'T', 'G'])
+    diag_score = 2
+    off_diag_score = 1
+    dash_score = 0
+    
+    seq_x = 'AA' 
+    seq_y = 'TAAT'
+    
+    scoring_matrix = student.build_scoring_matrix(alphabet, diag_score, off_diag_score, dash_score)
+    alignment_matrix = student.compute_alignment_matrix(seq_x, seq_y, scoring_matrix, True)
+    
+    score, align_x, align_y = student.compute_global_alignment(seq_x, seq_y, scoring_matrix, alignment_matrix)
+    
+    edit_distance = len(seq_x) + len(seq_y) - score
+    
+    return (diag_score, off_diag_score, dash_score)
+
+
+###############################################
+# Question 8
+    
+def check_spelling(checked_word, dist, word_list):
+    '''
+    Iterates through word_list and returns the set of all words that are within 
+    edit distance dist of the string checked_word.
+    '''
+    # Set constants 
+    ALPHABET = set(list(string.ascii_lowercase))
+    DIAG_SCORE = 2
+    OFF_DIAG_SCORE = 1
+    DASH_SCORE = 0
+    # contruct scoring matrix over all lower case letters
+    scoring_matrix = student.build_scoring_matrix(ALPHABET, DIAG_SCORE, OFF_DIAG_SCORE, DASH_SCORE)
+    # Init list to store words
+    close_words = []
+    # Loop over word in word_list
+    for word in word_list:
+        # compute alignment matrix
+        alignment_matrix = student.compute_alignment_matrix(checked_word, word, scoring_matrix, True)
+        # compute score of global alignments
+        score, align_x, align_y = student.compute_global_alignment(checked_word, word, scoring_matrix, alignment_matrix)
+        # calculate edit distance
+        edit_distance = len(checked_word) + len(word) - score
+        # Compare edit_distance and dist
+        if edit_distance <= dist:
+            # save word
+            close_words.append(word)
+    return close_words
+
+def answer_Q8()    
+    word_list = provided.read_words(WORD_LIST_URL)    
+    return (check_spelling("humble", 1, word_list), check_spelling("firefly", 2, word_list)) 
+
     
